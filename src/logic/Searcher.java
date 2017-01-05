@@ -9,24 +9,25 @@ import javax.swing.JProgressBar;
 
 public class Searcher
 {
-	private ArrayList <File> fileList = null; 			// список всех найденных файлов
-	private ArrayList <File> filesZeroSize = null; 		// список файлов c нулевым размером
-	private ArrayList <ArrayList<File>> bigList = null;	// список списков дубликатов
+	private ArrayList <File> fileList;				// список всех найденных файлов
+	private ArrayList <File> filesZeroSize;			// список файлов c нулевым размером
+	private ArrayList <ArrayList<File>> bigList;	// список списков дубликатов
 	private int minFileLength;
-	private JProgressBar progress = null;
+	private JProgressBar progress;
 
-	public Searcher(DefaultSettings defSet, JProgressBar pb)
+	public Searcher(DefaultSettings settings, JProgressBar progress)
 	{
-		progress = pb;
-		progress.setVisible(true);						// ProgressBar должен  отобразиться (но пока нет)
+		this.progress = progress;
+		this.progress.setVisible(true);
+		
 		fileList = new ArrayList <File> ();
 		filesZeroSize = new ArrayList <File> ();
-		minFileLength = defSet.getMinFileLength();
+		minFileLength = settings.getMinFileLength();
 		
-		getFileList(defSet.getPath());
+		getFileList(settings.getPath());
 		System.out.println("File list has "+fileList.size()+" points");
 		lengthChecking();
-		if (defSet.isImageSearchMode())
+		if (settings.isImageSearchMode())
 		{
 			imageChecking();
 		}
@@ -59,12 +60,12 @@ public class Searcher
 				}
 				else if (file.length() == 0)
 				{
-					filesZeroSize.add(file);	// добавление в список нулевых файлов
+					filesZeroSize.add(file);		// добавление в список нулевых файлов
 				}
 			}
-			else								// папка
+			else									// папка
 			{
-				getFileList(file.getPath());  	// рекурсивная проверка папок
+				getFileList(file.getPath());		// рекурсивная проверка папок
 			}
 		}
 	}
@@ -72,16 +73,16 @@ public class Searcher
 	/** Находит файлы одинакового размера и расширения*/
 	public void lengthChecking ()
 	{
-		progress.setMaximum(fileList.size());			// установка шкалы прогресса
+		progress.setMaximum(fileList.size());		// установка шкалы прогресса
 		
-		bigList = new ArrayList<ArrayList<File>>(); 	//список всех дубликатов (по размеру)
+		bigList = new ArrayList<ArrayList<File>>();	//список всех дубликатов (по размеру)
 		
 		for (int i=0; i<fileList.size(); i++)
 		{
-			File file1 = fileList.get(i); 							//файл1 для сравнения
-			ArrayList <File> smalList = new ArrayList<File>(); 		//список дубликатов этого файла
-			String fname = file1.getName();							//имя файла1
-			if (fname.lastIndexOf(".")==-1)							//нет расширения
+			File file1 = fileList.get(i);						//файл1 для сравнения
+			ArrayList <File> smalList = new ArrayList<File>();	//список дубликатов этого файла
+			String fname = file1.getName();						//имя файла1
+			if (fname.lastIndexOf(".")==-1)						//нет расширения
 			{
 				continue;
 			}
@@ -97,31 +98,32 @@ public class Searcher
 					j--;
 					continue;
 				}
-				String extens2 = fname.substring(fname.lastIndexOf("."), fname.length()); 	//расширение2
-				if (!ext_equals(extens1, extens2))		//расширения не совпадают
+				String extens2 = fname.substring(fname.lastIndexOf("."), fname.length());	//расширение2
+				if (!ext_equals(extens1, extens2))	//расширения не совпадают
 				{
 					continue;
 				}
-				if (file1.length()==file2.length())		//если файлы одинаковой длины
+				if (file1.length()==file2.length())	//если файлы одинаковой длины
 				{
-					smalList.add(file2);				//добавить файл2 в список дубликатов файла1
-					fileList.remove(j);					//убрать файл2 из списка fileList
+					smalList.add(file2);			//добавить файл2 в список дубликатов файла1
+					fileList.remove(j);				//убрать файл2 из списка fileList
 					j--;
 				}
 			}
 			
 			if (!smalList.isEmpty())		//если хотя бы один дубликат найден
 			{
-				smalList.add(file1);		// добавить также file1
-				bigList.add(smalList);		// добавить список в список дубликатов
+				smalList.add(file1);		//добавить также file1
+				bigList.add(smalList);		//добавить список в список дубликатов
 			}
 			progress.setValue(i+1);			//отображение прогресса
 		}
 		System.out.println("List has "+bigList.size()+" similar files");
 	}
 	
-	/**Среди уже найденных файлы с одинаковым размером и расширением находит
-	 * изображения jpg, png и bmp одного разрешения и с одинаковыми нулевым и центральным пикселями*/
+	/**Среди уже найденных файлов с одинаковым размером и расширением находит
+	 * изображения jpg, png и bmp одного разрешения и с одинаковыми нулевыми и центральными пикселями.
+	 * Эта функция используется только в Image Search Mode*/
 	public void imageChecking()
 	{
 		progress.setValue(0);
@@ -141,8 +143,9 @@ public class Searcher
 				try
 				{
 					image1 = ImageIO.read(file1);
-					if (image1==null)				//гребанный nullpointerexception
+					if (image1==null)				//anti-nullpointerexception
 					{
+						System.out.println("Loaded image "+file1+" is null");
 						continue;
 					}
 				} 
@@ -177,7 +180,7 @@ public class Searcher
 							{
 								int centerX = image1.getWidth()/2;
 								int centerY = image1.getHeight()/2;
-								if (image1.getRGB(centerX, centerY)==image2.getRGB(centerX, centerY)) //по центральному пикселю
+								if (image1.getRGB(centerX, centerY)==image2.getRGB(centerX, centerY))	//по центральному пикселю
 								{
 									smalImgList.add(file2);
 									smalList.remove(j);
@@ -198,6 +201,8 @@ public class Searcher
 		bigList = bigImgList;	// замена для простоты вывода
 		System.out.println("List has "+bigList.size()+" similar pictures");
 	}
+	
+	/**File extensions equals function*/
 	private boolean ext_equals(String s1, String s2)
 	{
 		if (s1.equals(s2) || s1.equals(s2.toLowerCase()) || s1.equals(s2.toUpperCase()))

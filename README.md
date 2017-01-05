@@ -2,8 +2,6 @@
 
 duplicate scanner with GUI
 
-I published that junior code only like example for a hirer. If you are real programmer you can found nothing interesting here.
-
-The program makes a list of files of specified directory and tries to found a duplicates in it. The scan executes by file size, by extension and then by several pixels for images. Now only search by images has a full realization. And the progress bar don't work correctly, I know.
+The program makes a list of files of specified directory (and it's subdirs) and tries to found a duplicates inside. The scan performs by file size and by extension. In ImageSearchMode (for jpg, png and bmp image files) added extended checking by resolution and by several pixels, so this mode is preferable. Additionally there is a list of empty files (with size = 0) you can view pressing appropriate button.
 
 License: BSD.

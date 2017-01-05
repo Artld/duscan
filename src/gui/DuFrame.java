@@ -11,7 +11,7 @@ class DuFrame extends JFrame
 	public DuFrame()
 	{
 		DefaultSettings df = new DefaultSettings();
-		setTitle("Duplicate searcher v.0.3 by rtld");
+		setTitle("Duplicate Searcher by rtld");
 		setBounds(150, 100, df.getFrameWidth(), df.getFrameHeigth());
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
