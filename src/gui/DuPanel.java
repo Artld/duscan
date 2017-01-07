@@ -1,10 +1,10 @@
 package gui;
 
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+
 import javax.swing.*;
 
 import logic.DefaultSettings;
@@ -57,8 +57,9 @@ class DuPanel extends JPanel
 
 		//Table to view list of duplicates
 		final JTable table = new JTable(model);
-		table.getColumnModel().getColumn(1).setMaxWidth(250);
-		table.getColumnModel().getColumn(1).setPreferredWidth(150);
+		table.getColumnModel().getColumn(0).setMaxWidth(20);
+		table.getColumnModel().getColumn(2).setMaxWidth(250);
+		table.getColumnModel().getColumn(2).setPreferredWidth(150);
 		table.addMouseListener(model.dClickListener);
 		
 		//ScrollPane to hold the Table inside
@@ -71,21 +72,14 @@ class DuPanel extends JPanel
 		btnOpen.setBounds(settings.getFrameWidth()-125,70,95,25);
 		btnOpen.addActionListener(model.aOpen);
 		add(btnOpen);
-
-		//Delete file
-		JButton btnDelete = new JButton("Delete");
-		btnDelete.setBounds(settings.getFrameWidth()-125,105,95,25);
+		
+		//Delete selected files
+		JButton btnDelete = new JButton("<html><center>Delete checked</center></html>");
+		btnDelete.setBounds(settings.getFrameWidth()-125,105,95,35);
 		btnDelete.addActionListener(model.aDelete);
 		add(btnDelete);
 
-		//ShowZeroFiles button
-		JToggleButton btnShowZero = new JToggleButton("Empty files");
-		btnShowZero.setFont(new Font("Arial",1,11));
-		btnShowZero.setBounds(settings.getFrameWidth()-125,140,95,25);
-		btnShowZero.addActionListener(model.aToggleShow);
-		add(btnShowZero);
-
-		//Checkbox
+		//Mode selection
 		final JCheckBox chbox = new JCheckBox("ImageSearch mode");
 		chbox.setBounds(10, settings.getFrameHeigth()-85, 160, 25);
 		chbox.setSelected(settings.isImageSearchMode());
@@ -120,10 +114,8 @@ class DuPanel extends JPanel
 					    public void run()
 					    {
 					    	Searcher searcher = new Searcher(settings, progress);
-					
 					    	ArrayList<ArrayList<File>> bigList = searcher.getDubList();
-					    	ArrayList<File> zeroList = searcher.getZeroList();
-					    	model.showList(bigList,zeroList,table);
+					    	model.showList(bigList,table);
 					    }
 					}).start();
 				}

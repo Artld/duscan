@@ -10,7 +10,6 @@ import javax.swing.JProgressBar;
 public class Searcher
 {
 	private ArrayList <File> fileList;				// список всех найденных файлов
-	private ArrayList <File> filesZeroSize;			// список файлов c нулевым размером
 	private ArrayList <ArrayList<File>> bigList;	// список списков дубликатов
 	private int minFileLength;
 	private JProgressBar progress;
@@ -21,7 +20,6 @@ public class Searcher
 		this.progress.setVisible(true);
 		
 		fileList = new ArrayList <File> ();
-		filesZeroSize = new ArrayList <File> ();
 		minFileLength = settings.getMinFileLength();
 		
 		getFileList(settings.getPath());
@@ -38,11 +36,6 @@ public class Searcher
 		return bigList;
 	}
 	
-	public ArrayList <File> getZeroList()
-	{
-		return filesZeroSize;
-	}
-	
 	/**Находит все файлы по пути path и заполняет ими fileList 
 	 * @param path	путь к папке с файлами */
 	private void getFileList(String path) 
@@ -57,10 +50,6 @@ public class Searcher
 				if (file.length() > minFileLength)	// этим числом ограничиваем минимальный размер добавляемых файлов
 				{
 					fileList.add(file);				// добавление в общий список
-				}
-				else if (file.length() == 0)
-				{
-					filesZeroSize.add(file);		// добавление в список нулевых файлов
 				}
 			}
 			else									// папка
