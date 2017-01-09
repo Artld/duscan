@@ -43,7 +43,6 @@ public class DuMenuBar extends JMenuBar
 				JSpinner spin = new JSpinner(numModel);
 				if (JOptionPane.showOptionDialog(null, spin, " Minimum file size (kb): ", 2, 1, null, null, null)==0)
 				{
-					numModel.getNumber();
 					settings.setMinFileLength(1024 * (Integer) numModel.getNumber());
 				}
 			}
