@@ -4,33 +4,15 @@ public class DefaultSettings
 {
 	private String path = System.getProperty("user.home");
 	private int minFileLength = 1024*5;
-	private int frameWidth = 900;
-	private int frameHeigth = 500;
-	private boolean ImageSearchMode = true;
+	private boolean imageSearchMode = true;
 	
 	public boolean isImageSearchMode()
 	{
-		return ImageSearchMode;
+		return imageSearchMode;
 	}
 	public void setImageSearchMode(boolean imageSearchMode)
 	{
-		ImageSearchMode = imageSearchMode;
-	}
-	public int getFrameWidth()
-	{
-		return frameWidth;
-	}
-	public void setFrameWidth(int frameWidth)
-	{
-		this.frameWidth = frameWidth;
-	}
-	public int getFrameHeigth()
-	{
-		return frameHeigth;
-	}
-	public void setFrameHeigth(int frameHeigth)
-	{
-		this.frameHeigth = frameHeigth;
+		this.imageSearchMode = imageSearchMode;
 	}
 	public String getPath()
 	{

@@ -18,16 +18,20 @@ public class Searcher
 	{
 		this.progress = progress;
 		this.progress.setVisible(true);
+		this.progress.setString("file list creation...");
 		
 		fileList = new ArrayList <File> ();
 		minFileLength = settings.getMinFileLength();
-		
 		getFileList(settings.getPath());
 		System.out.println("File list has "+fileList.size()+" points");
-		lengthChecking();
+		
+		this.progress.setString(null);
+		
+		lengthChecking();					//first stage (for all files)
+		
 		if (settings.isImageSearchMode())
 		{
-			imageChecking();
+			imageChecking();				//second stage (for images only)
 		}
 	}
 	
@@ -107,6 +111,7 @@ public class Searcher
 			}
 			progress.setValue(i+1);			//отображение прогресса
 		}
+		progress.setValue(progress.getMaximum());
 		System.out.println("List has "+bigList.size()+" similar files");
 	}
 	
@@ -188,6 +193,7 @@ public class Searcher
 			progress.setValue(i+1);
 		}
 		bigList = bigImgList;	// замена для простоты вывода
+		progress.setValue(progress.getMaximum());
 		System.out.println("List has "+bigList.size()+" similar pictures");
 	}
 	

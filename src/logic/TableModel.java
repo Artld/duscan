@@ -35,7 +35,7 @@ public class TableModel extends AbstractTableModel
 		this.displayedList = new ArrayList<File>();
 		this.coloredList = new ArrayList<Boolean>();
 		boolean b = true;
-		
+
 		for (ArrayList<File> sList : bList)
 		{
 			this.displayedList.addAll(sList);
@@ -47,7 +47,7 @@ public class TableModel extends AbstractTableModel
 		}
 		selectList = new ArrayList<Boolean>(Arrays.asList(new Boolean[displayedList.size()])); //makes selectList size = displayedList size
 		Collections.fill(selectList, Boolean.FALSE);
-		
+
 		updateRowColours();
 		fireTableDataChanged();
 	}
@@ -114,38 +114,47 @@ public class TableModel extends AbstractTableModel
 		}
 		return cl;
 	}
-	
+
 	class ActionDelete implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			for (int i=0; i<selectList.size(); i++)
+			if (selectList != null)
 			{
-				if (selectList.get(i))
+				for (int i=0; i<selectList.size(); i++)
 				{
-					File file = displayedList.get(i);
-					file.delete();
-					displayedList.remove(i);
-					selectList.remove(i);
-					coloredList.remove(i);
-					i--;
+					if (selectList.get(i))
+					{
+						File file = displayedList.get(i);
+						file.delete();
+						displayedList.remove(i);
+						selectList.remove(i);
+						coloredList.remove(i);
+						i--;
+					}
 				}
+				updateRowColours();
+				fireTableDataChanged();
 			}
-			updateRowColours();
-			fireTableDataChanged();
 		}		
 	}
-	
+
 	class ActionOpen implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			openFile();
+			if(displayedList != null)
+			{
+				if(tbl.getSelectedRowCount() > 0)
+				{
+					openFile();
+				}
+			}
 		}		
 	}
-	
+
 	class ListenerDoubleClick implements MouseListener
 	{
 		@Override
@@ -187,39 +196,38 @@ public class TableModel extends AbstractTableModel
 			}
 		}
 	}
-	
+
 	private void updateRowColours() 
 	{
 		MyTableCellRenderer renderer = new MyTableCellRenderer();
 		tbl.getColumnModel().getColumn(1).setCellRenderer(renderer);
 		tbl.getColumnModel().getColumn(2).setCellRenderer(renderer);
 		tbl.getColumnModel().getColumn(3).setCellRenderer(renderer);
-    }
-	
+	}
+
 	private Color getRowColour(int row)
 	{
 		if (coloredList.get(row))
-        {
+		{
 			return Color.GREEN;
-        }
+		}
 		else
 		{
 			return Color.ORANGE;
 		}
-    }
-	
+	}
+
 	//class extended to manipulate cell colors
-	//Thanks Richard Fearn http://stackoverflow.com/a/3875829
 	class MyTableCellRenderer extends DefaultTableCellRenderer
 	{
 		private static final long serialVersionUID = 1L;
 		@Override
-	    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
 		{
-	        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-	        TableModel model = (TableModel) table.getModel();
-	        c.setBackground(model.getRowColour(row));
-	        return c;
-	    }
+			Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+			TableModel model = (TableModel) table.getModel();
+			comp.setBackground(model.getRowColour(row));
+			return comp;
+		}
 	}
 }

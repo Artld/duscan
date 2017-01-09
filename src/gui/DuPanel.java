@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -14,27 +15,36 @@ import logic.TableModel;
 class DuPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
+	private DuMenuBar bar;
+	private JLabel label;
+	private JTextField text;
+	private JScrollPane scroll;
+	private JButton btnPath;
+	private JButton btnOpen;
+	private JButton btnDelete;
+	private JProgressBar progress;
+	private JButton btnStart;
+	
 	DuPanel()
 	{
-		final DefaultSettings settings = new DefaultSettings();
-
-		setBounds(10, 10, settings.getFrameWidth()-25, settings.getFrameHeigth()-50);
 		setLayout(null);
-
+		
+		final DefaultSettings settings = new DefaultSettings();
+		
+		bar = new DuMenuBar(settings);
+		add(bar);
+		
 		//Label "Path:"
-		JLabel label1 = new JLabel("Path:");
-		label1.setBounds(10, 20, 40, 20);
-		add(label1);
+		label = new JLabel("Path:");
+		add(label);
 
 		//Text Field to display Path
-		final JTextField tf1 = new JTextField();		
-		tf1.setText(settings.getPath());
-		tf1.setBounds(50, 20, settings.getFrameWidth()-140, 20);
-		add(tf1);
+		text = new JTextField();		
+		text.setText(settings.getPath());
+		add(text);
 
 		//Button to edit Path
-		JButton btnPath = new JButton("...");
-		btnPath.setBounds(settings.getFrameWidth()-85,20,50,20);
+		btnPath = new JButton("...");
 		btnPath.addActionListener(new ActionListener()
 		{
 			@Override
@@ -46,12 +56,12 @@ class DuPanel extends JPanel
 				if (ret == JFileChooser.APPROVE_OPTION)
 				{
 					File file = fc.getSelectedFile();
-					tf1.setText(file.getPath());
+					text.setText(file.getPath());
 				}
 			}
 		});
 		add(btnPath);
-		
+
 		//Table actions
 		final TableModel model = new TableModel();
 
@@ -61,66 +71,69 @@ class DuPanel extends JPanel
 		table.getColumnModel().getColumn(2).setMaxWidth(250);
 		table.getColumnModel().getColumn(2).setPreferredWidth(150);
 		table.addMouseListener(model.dClickListener);
-		
+
 		//ScrollPane to hold the Table inside
-		JScrollPane scr = new JScrollPane(table);
-		scr.setBounds(10, 50, settings.getFrameWidth()-145, settings.getFrameHeigth()-145);
-		add(scr);
+		scroll = new JScrollPane(table);
+		add(scroll);
 
 		//Open file
-		JButton btnOpen = new JButton("Open");
-		btnOpen.setBounds(settings.getFrameWidth()-125,70,95,25);
+		btnOpen = new JButton("Open");
 		btnOpen.addActionListener(model.aOpen);
 		add(btnOpen);
-		
+
 		//Delete selected files
-		JButton btnDelete = new JButton("<html><center>Delete checked</center></html>");
-		btnDelete.setBounds(settings.getFrameWidth()-125,105,95,35);
+		btnDelete = new JButton("<html><center>Delete checked</center></html>");
 		btnDelete.addActionListener(model.aDelete);
 		add(btnDelete);
-
-		//Mode selection
-		final JCheckBox chbox = new JCheckBox("ImageSearch mode");
-		chbox.setBounds(10, settings.getFrameHeigth()-85, 160, 25);
-		chbox.setSelected(settings.isImageSearchMode());
-		add(chbox);
-
+		
 		//ProgressBar
-		final JProgressBar progress = new JProgressBar();
-		progress.setBounds(settings.getFrameWidth()/2+10, settings.getFrameHeigth()-85, 205, 25);
+		progress = new JProgressBar();
 		progress.setStringPainted(true);
 		progress.setVisible(false);
 		add(progress);
 
 		//Button to start search
-		JButton btnStart = new JButton("Run");
-		btnStart.setBounds(settings.getFrameWidth()/2-120,settings.getFrameHeigth()-85,120,25);
+		btnStart = new JButton("Run");
 		btnStart.addActionListener(new ActionListener()
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (new File(tf1.getText()).isDirectory())
+				if (new File(text.getText()).isDirectory())
 				{
-					settings.setPath(tf1.getText());
-					if (chbox.isSelected())
-					{
-						settings.setImageSearchMode(true);
-					}
-					
+					settings.setPath(text.getText());
+
 					new Thread(new Runnable()
 					{
-					    @Override
-					    public void run()
-					    {
-					    	Searcher searcher = new Searcher(settings, progress);
-					    	ArrayList<ArrayList<File>> bigList = searcher.getDubList();
-					    	model.showList(bigList,table);
-					    }
+						@Override
+						public void run()
+						{
+							btnStart.setEnabled(false);
+
+							Searcher searcher = new Searcher(settings, progress);
+							ArrayList<ArrayList<File>> bigList = searcher.getDubList();
+							model.showList(bigList,table);
+
+							btnStart.setEnabled(true);
+						}
 					}).start();
 				}
 			}
 		});
 		add(btnStart);
+	}
+
+	public void resizePanel(final Rectangle r)
+	{
+		setBounds(          0,             0,           r.width,       r.height);
+		label.setBounds(    10,            30,          40,            20);
+		bar.setBounds(      0,             0,           r.width,       20);
+		text.setBounds(     50,            30,          r.width-125,   20);
+		btnPath.setBounds(  r.width-65,    30,          50,            20);
+		btnOpen.setBounds(  r.width-110,   80,          95,            25);
+		btnDelete.setBounds(r.width-110,   115,         95,            35);
+		scroll.setBounds(   10,            60,          r.width-130,   r.height-130);
+		btnStart.setBounds( r.width/2-100, r.height-65, 120,           25);
+		progress.setBounds( r.width/2+30,  r.height-65, r.width/2-150, 25);
 	}
 }
