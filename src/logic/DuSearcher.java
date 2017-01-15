@@ -2,44 +2,71 @@ package logic;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.JProgressBar;
 
-public class Searcher
+public class DuSearcher
 {
 	private ArrayList <File> fileList;				// список всех найденных файлов
-	private ArrayList <ArrayList<File>> bigList;	// список списков дубликатов
+	private ArrayList <ArrayList<File>> bigClassList;	// список списков дубликатов
 	private int minFileLength;
+	private int points;
 	private JProgressBar progress;
 
-	public Searcher(DefaultSettings settings, JProgressBar progress)
+	public DuSearcher(DuSettings settings, JProgressBar progress)
 	{
 		this.progress = progress;
 		this.progress.setVisible(true);
 		this.progress.setString("file list creation...");
-		
+
 		fileList = new ArrayList <File> ();
 		minFileLength = settings.getMinFileLength();
+		points = settings.getPoints();
+
+		//making file list
+		System.out.println("Start making file list...");
 		getFileList(settings.getPath());
 		System.out.println("File list has "+fileList.size()+" points");
-		
+
 		this.progress.setString(null);
-		
-		lengthChecking();					//first stage (for all files)
-		
+
+		//1st comparison stage (for all files)
+		progress.setMaximum(fileList.size());					// установка шкалы прогресса
+		System.out.println("Start file comparison...");
+		lengthChecking();
+		System.out.println("List has "+bigClassList.size()+" groups of similar files");
+		progress.setValue(progress.getMaximum());
+
+		//2nd comparison stage
+		progress.setValue(0);
+		progress.setMaximum(bigClassList.size());		// установка шкалы прогресса по-новой
+		//for images only
 		if (settings.isImageSearchMode())
 		{
-			imageChecking();				//second stage (for images only)
+			System.out.println("Start image comparison...");
+			imageChecking();
+			System.out.println("List has "+bigClassList.size()+" groups of similar pictures");
 		}
+		else //byte to byte comparison - for other files
+		{
+			System.out.println("Start byte to byte comparison...");
+			byteChecking();
+			System.out.println("List has "+bigClassList.size()+" groups of equal files");
+		}
+		progress.setValue(progress.getMaximum());
+		this.progress.setVisible(false);
+		System.out.println("Done.");
 	}
-	
+
 	public ArrayList <ArrayList<File>> getDubList()
 	{
-		return bigList;
+		return bigClassList;
 	}
-	
+
 	/**Находит все файлы по пути path и заполняет ими fileList 
 	 * @param path	путь к папке с файлами */
 	private void getFileList(String path) 
@@ -56,7 +83,7 @@ public class Searcher
 					fileList.add(file);				// добавление в общий список
 				}
 			}
-			else									// папка
+			else if (file.isDirectory())			// папка
 			{
 				getFileList(file.getPath());		// рекурсивная проверка папок
 			}
@@ -66,10 +93,7 @@ public class Searcher
 	/** Находит файлы одинакового размера и расширения*/
 	public void lengthChecking ()
 	{
-		progress.setMaximum(fileList.size());		// установка шкалы прогресса
-		
-		bigList = new ArrayList<ArrayList<File>>();	//список всех дубликатов (по размеру)
-		
+		bigClassList = new ArrayList<ArrayList<File>>();	//список всех дубликатов (по размеру)
 		for (int i=0; i<fileList.size(); i++)
 		{
 			File file1 = fileList.get(i);						//файл1 для сравнения
@@ -83,7 +107,7 @@ public class Searcher
 			for (int j=i+1; j<fileList.size(); j++) 
 			{
 				File file2 = fileList.get(j);		//файл2 для сравнения
-				
+
 				fname = file2.getName();			//имя файла2
 				if (fname.lastIndexOf(".")==-1)		//нет расширения
 				{
@@ -103,31 +127,93 @@ public class Searcher
 					j--;
 				}
 			}
-			
 			if (!smalList.isEmpty())		//если хотя бы один дубликат найден
 			{
 				smalList.add(file1);		//добавить также file1
-				bigList.add(smalList);		//добавить список в список дубликатов
+				bigClassList.add(smalList);		//добавить список в список дубликатов
 			}
 			progress.setValue(i+1);			//отображение прогресса
 		}
-		progress.setValue(progress.getMaximum());
-		System.out.println("List has "+bigList.size()+" similar files");
 	}
+
+	/**Сравнивает файлы по байтам*/
+	public void byteChecking()
+	{
+		ArrayList<ArrayList<File>> bigLocalList = new ArrayList<ArrayList<File>>(); //список списков (групп фалов) результата
+		for (int i=0; i<bigClassList.size(); i++)
+		{
+			ArrayList <File> smalList = bigClassList.get(i);			//исходный список файлов
+			ArrayList <File> smalLocalList = new ArrayList<File>();		//список файлов результата
+
+			File file1 = smalList.get(0);								//файл1
+			System.out.println(file1.getPath());
+			byte[] data1 = null;
+			try
+			{
+				data1 = Files.readAllBytes(Paths.get(file1.getPath()));	//чтение файла1 в массив байтов
+			} 
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				System.out.println(e.getMessage());
+				System.out.println(e.getStackTrace());
+			}
+			
+			for (int j=1; j<smalList.size(); j++)
+			{
+				File file2 = smalList.get(j);							//файл2
+				byte[] data2 = null;
+				try
+				{
+					data2 = Files.readAllBytes(Paths.get(file2.getPath()));	//чтение файла2 в массив байтов
+				} 
+				catch (IOException e)
+				{
+					e.printStackTrace();
+					System.out.println(e.getMessage());
+					System.out.println(e.getStackTrace());
+				}
+				
+				//сравнение
+
+				//если хоть один байт не совпадает, флаг устанавливается в false
+				boolean flag = true;
+				int distance = data1.length/points;
+				for (int k=0; k<points; k++)
+				{
+					if (data1[distance*k]!=data2[distance*k])
+					{
+						flag = false;
+					}
+				}
+				
+				if (flag)
+				{
+					smalLocalList.add(file2);		//добавить в список файл2
+					smalList.remove(j);				//удалить этот файл из списка обработки, чтобы исключить повторное сравнение
+					j--;							//скорректировать цикл после удаления файла из списка
+				}
+			}
+			if (!smalLocalList.isEmpty())			//если хоть один дубликат был найден
+			{
+				smalLocalList.add(file1);			//также добавить файл1
+				bigLocalList.add(smalLocalList);	//наконец, добавить сам список 
+			}
+			progress.setValue(i+1);
+		}
+		bigClassList = bigLocalList;	// замена для простоты вывода
+	}	
 	
 	/**Среди уже найденных файлов с одинаковым размером и расширением находит
 	 * изображения jpg, png и bmp одного разрешения и с одинаковыми нулевыми и центральными пикселями.
 	 * Эта функция используется только в Image Search Mode*/
 	public void imageChecking()
 	{
-		progress.setValue(0);
-		progress.setMaximum(bigList.size());		// установка шкалы прогресса по-новой
-		
-		ArrayList<ArrayList<File>> bigImgList = new ArrayList<ArrayList<File>>();
-		for (int i=0; i<bigList.size(); i++)
+		ArrayList<ArrayList<File>> bigList = new ArrayList<ArrayList<File>>();
+		for (int i=0; i<bigClassList.size(); i++)
 		{
-			ArrayList <File> smalList = bigList.get(i);		
-			File file1 = smalList.get(0);					
+			ArrayList <File> smalList = bigClassList.get(i);		
+			File file1 = smalList.get(0);			//файл1
 			String fname = file1.getName();			//имя файла
 			if (fname.endsWith(".jpg") || fname.endsWith(".jpeg") || fname.endsWith(".png") || fname.endsWith(".bmp") || fname.endsWith(".JPG") || fname.endsWith(".JPEG") || fname.endsWith(".PNG") || fname.endsWith(".BMP"))
 			{
@@ -136,25 +222,20 @@ public class Searcher
 				BufferedImage image2 = null;
 				try
 				{
-					image1 = ImageIO.read(file1);
+					image1 = ImageIO.read(file1);	//чтение изображения1 из файла1
 					if (image1==null)				//anti-nullpointerexception
 					{
 						System.out.println("Loaded image "+file1+" is null");
 						continue;
 					}
 				} 
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					continue;
-				}
+				catch (IOException e)	{e.printStackTrace();	continue;}
 				for (int j=1; j<smalList.size(); j++)
 				{
-					File file2 = smalList.get(j);
+					File file2 = smalList.get(j);		//файл2
 					try
 					{
-						System.out.println(""+file2);
-						image2 = ImageIO.read(file2);
+						image2 = ImageIO.read(file2);	//чтение изображения2 из файла2
 						if (image2==null)
 						{
 							continue;
@@ -163,6 +244,8 @@ public class Searcher
 					catch (IOException | IllegalArgumentException e)
 					{
 						System.out.println("Error processing file "+file2);
+						System.out.println(e.getMessage());
+						System.out.println(e.getStackTrace());
 						e.printStackTrace();
 						continue;
 					}
@@ -187,16 +270,14 @@ public class Searcher
 				if (!smalImgList.isEmpty())
 				{
 					smalImgList.add(file1);
-					bigImgList.add(smalImgList);
+					bigList.add(smalImgList);
 				}
 			}
 			progress.setValue(i+1);
 		}
-		bigList = bigImgList;	// замена для простоты вывода
-		progress.setValue(progress.getMaximum());
-		System.out.println("List has "+bigList.size()+" similar pictures");
+		bigClassList = bigList;	// замена для простоты вывода
 	}
-	
+
 	/**File extensions equals function*/
 	private boolean ext_equals(String s1, String s2)
 	{

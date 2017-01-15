@@ -18,7 +18,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 @SuppressWarnings("serial")
-public class TableModel extends AbstractTableModel
+public class DuTableModel extends AbstractTableModel
 {
 	private ArrayList<File> displayedList = null;			//list displayed inside table
 	private ArrayList<Boolean> coloredList = null;			//list of groups of duplicates
@@ -26,6 +26,9 @@ public class TableModel extends AbstractTableModel
 	private JTable tbl = null;
 	public ActionOpen   aOpen   = new ActionOpen();
 	public ActionDelete aDelete = new ActionDelete();
+	public ActionAutoSelect aAutoSelect = new ActionAutoSelect();
+	public ActionMirrorSelection aMirror = new ActionMirrorSelection();
+	public ActionDeselect aDeselect = new ActionDeselect();
 	public ListenerDoubleClick dClickListener = new ListenerDoubleClick();
 
 	//Inicialization function
@@ -51,27 +54,23 @@ public class TableModel extends AbstractTableModel
 		updateRowColours();
 		fireTableDataChanged();
 	}
-
 	@Override 
 	public int getColumnCount() 
 	{
 		return 4;
 	}
-
 	@Override
 	public String getColumnName(int col) 
 	{
-		String[] colNames = {"", "Name", "Size", "Path"};
+		String[] colNames = {"", "Name", "Size/KiB", "Path"};
 		return colNames[col];
 	}
-
 	@Override
 	public int getRowCount() 
 	{
 		if (displayedList == null) return 0;
 		return displayedList.size();
 	}
-
 	@Override
 	public Object getValueAt(int row, int col) 
 	{
@@ -81,18 +80,16 @@ public class TableModel extends AbstractTableModel
 		{
 		case 0: ret = selectList.get(row);	break;
 		case 1: ret = file.getName();		break;
-		case 2: ret = file.length();		break;
+		case 2: ret = file.length()/1024;	break;
 		case 3: ret = file.getPath();		break;
 		}
 		return ret;
 	}
-
 	@Override
 	public boolean isCellEditable(int row, int column)
 	{
 		return (column == 0);
 	}
-
 	@Override
 	public void setValueAt(Object aValue, int row, int column)
 	{
@@ -102,7 +99,6 @@ public class TableModel extends AbstractTableModel
 			fireTableCellUpdated(row, column);
 		}
 	}
-
 	@Override
 	public Class<?> getColumnClass(int columnIndex)
 	{
@@ -114,8 +110,80 @@ public class TableModel extends AbstractTableModel
 		}
 		return cl;
 	}
-
-	class ActionDelete implements ActionListener
+	private void openFile()
+	{
+		if(!Desktop.isDesktopSupported())
+		{
+			System.out.println("Desktop is not supported");
+			return;
+		}
+		Desktop desktop = Desktop.getDesktop();
+		File file = displayedList.get(tbl.getSelectedRow());
+		if(file.exists())
+		{
+			try
+			{
+				desktop.open(file);
+			} 
+			catch (IOException e1)
+			{
+				e1.printStackTrace();
+			}
+		}
+	}
+	private void updateRowColours() 
+	{
+		MyTableCellRenderer renderer = new MyTableCellRenderer();
+		tbl.getColumnModel().getColumn(1).setCellRenderer(renderer);
+		tbl.getColumnModel().getColumn(2).setCellRenderer(renderer);
+		tbl.getColumnModel().getColumn(3).setCellRenderer(renderer);
+	}
+	private Color getRowColour(int row)
+	{
+		if (coloredList.get(row))
+		{
+			return Color.GREEN;
+		}
+		else
+		{
+			return Color.ORANGE;
+		}
+	}
+	private void autoSelect()
+	{
+		boolean b = coloredList.get(0);
+		selectList.set(0, false);
+		for (int i=1; i<coloredList.size(); i++)
+		{
+			if (coloredList.get(i)==b)
+			{
+				selectList.set(i, true);
+			}
+			else
+			{
+				selectList.set(i, false);
+				b = !b;
+			}
+		}
+		fireTableDataChanged();
+	}
+	private void mirrorSelection()
+	{
+		for (int i=0; i<selectList.size(); i++)
+		{
+			selectList.set(i, !selectList.get(i));
+		}
+		fireTableDataChanged();
+	}
+	private void deselect()
+	{
+		for (int i=0; i<selectList.size(); i++)
+		{
+			selectList.set(i, false);
+		}
+		fireTableDataChanged();
+	}
+	private class ActionDelete implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) 
@@ -139,8 +207,7 @@ public class TableModel extends AbstractTableModel
 			}
 		}		
 	}
-
-	class ActionOpen implements ActionListener
+	private class ActionOpen implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) 
@@ -154,8 +221,7 @@ public class TableModel extends AbstractTableModel
 			}
 		}		
 	}
-
-	class ListenerDoubleClick implements MouseListener
+	private class ListenerDoubleClick implements MouseListener
 	{
 		@Override
 		public void mouseClicked(java.awt.event.MouseEvent e)
@@ -174,60 +240,54 @@ public class TableModel extends AbstractTableModel
 		@Override
 		public void mouseExited(java.awt.event.MouseEvent e){}
 	}
-
-	private void openFile()
-	{
-		if(!Desktop.isDesktopSupported())
-		{
-			System.out.println("Desktop is not supported");
-			return;
-		}
-		Desktop desktop = Desktop.getDesktop();
-		File file = displayedList.get(tbl.getSelectedRow());
-		if(file.exists())
-		{
-			try
-			{
-				desktop.open(file);
-			} 
-			catch (IOException e1)
-			{
-				e1.printStackTrace();
-			}
-		}
-	}
-
-	private void updateRowColours() 
-	{
-		MyTableCellRenderer renderer = new MyTableCellRenderer();
-		tbl.getColumnModel().getColumn(1).setCellRenderer(renderer);
-		tbl.getColumnModel().getColumn(2).setCellRenderer(renderer);
-		tbl.getColumnModel().getColumn(3).setCellRenderer(renderer);
-	}
-
-	private Color getRowColour(int row)
-	{
-		if (coloredList.get(row))
-		{
-			return Color.GREEN;
-		}
-		else
-		{
-			return Color.ORANGE;
-		}
-	}
-
-	//class extended to manipulate cell colors
-	class MyTableCellRenderer extends DefaultTableCellRenderer
+	//this class was completely rewritten
+	private class MyTableCellRenderer extends DefaultTableCellRenderer
 	{
 		private static final long serialVersionUID = 1L;
 		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+		public Component getTableCellRendererComponent(JTable table, Object value,
+				boolean isSelected, boolean hasFocus, int row, int column)
 		{
-			Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			TableModel model = (TableModel) table.getModel();
+			Component comp = super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
+			DuTableModel model = (DuTableModel) table.getModel();
 			comp.setBackground(model.getRowColour(row));
 			return comp;
+		}
+	}
+	private class ActionAutoSelect implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) 
+		{
+			if(selectList != null)
+			{
+				if(!coloredList.isEmpty())
+				{
+					autoSelect();
+				}
+			}
+		}
+	}
+	private class ActionMirrorSelection implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) 
+		{
+			if(selectList != null)
+			{
+				mirrorSelection();
+			}
+		}
+	}
+	private class ActionDeselect implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) 
+		{
+			if(selectList != null)
+			{
+				deselect();
+			}
 		}
 	}
 }

@@ -1,11 +1,21 @@
 package logic;
 
-public class DefaultSettings
+public class DuSettings
 {
 	private String path = System.getProperty("user.home");
 	private int minFileLength = 1024*5;
-	private boolean imageSearchMode = true;
+	private int points = 10;
+	private boolean imageSearchMode = false;
 	
+	
+	public int getPoints()
+	{
+		return points;
+	}
+	public void setPoints(int points)
+	{
+		this.points = points;
+	}	
 	public boolean isImageSearchMode()
 	{
 		return imageSearchMode;

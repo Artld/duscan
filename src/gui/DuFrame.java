@@ -12,7 +12,7 @@ class DuFrame extends JFrame
 	public DuFrame()
 	{
 		setTitle("Duscan - Duplicate scanner");
-		setBounds(150, 100, 900, 500);
+		setBounds(150, 100, 800, 500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		final DuPanel panel = new DuPanel();
@@ -23,9 +23,8 @@ class DuFrame extends JFrame
 			@Override
 			public void componentResized(ComponentEvent e)
 			{
-				panel.resizePanel(getBounds());
+				panel.resizePanelComponents(getBounds());
 			}
-
 			@Override
 			public void componentMoved(ComponentEvent e){}
 			@Override
