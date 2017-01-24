@@ -28,12 +28,10 @@ public class DuMenuBar extends JMenuBar
 	private JMenuItem itemImageMode;
 	private JMenuItem itemLog;
 	private JMenuItem itemTable;
-	private DuSettings settings;
 	
-	public DuMenuBar(final DuSettings settings, ActionListener aToggle) 
+	public DuMenuBar(ActionListener aToggle) 
 	{
 		setLayout(null);
-		this.settings = settings;
 
 		//MENU "CONFIG"
 		
@@ -46,7 +44,7 @@ public class DuMenuBar extends JMenuBar
 			private static final long serialVersionUID = 1L;
 			public void actionPerformed(ActionEvent e)
 			{
-				settings.setImageSearchMode(!settings.isImageSearchMode());
+				DuSettings.setImageSearchMode(!DuSettings.isImageSearchMode());
 				updateItemText();
 			}
 		});
@@ -58,15 +56,30 @@ public class DuMenuBar extends JMenuBar
 			private static final long serialVersionUID = 1L;
 			public void actionPerformed(ActionEvent e)
 			{
-				SpinnerNumberModel numModel = new SpinnerNumberModel(settings.getMinFileLength()/1024,0,611392,1);
+				SpinnerNumberModel numModel = new SpinnerNumberModel(DuSettings.getMinFileLength()/1024,0,611392,1);
 				JSpinner spin = new JSpinner(numModel);
 				if (JOptionPane.showOptionDialog(null, spin, " Minimum file size (kb): ", 2, 1, null, null, null)==0)
 				{
-					settings.setMinFileLength(1024 * (Integer) numModel.getNumber());
+					DuSettings.setMinFileLength(1024 * (Integer) numModel.getNumber());
 				}
 			}
 		});
 		menuConfig.add(itemMinSize);
+		
+		JMenuItem itemPointsNum = new JMenuItem(new AbstractAction("Specify number of checkpoints...")
+		{
+			private static final long serialVersionUID = 1L;
+			public void actionPerformed(ActionEvent e)
+			{
+				SpinnerNumberModel numModel = new SpinnerNumberModel(DuSettings.getPoints(),1,100,1);
+				JSpinner spin = new JSpinner(numModel);
+				if (JOptionPane.showOptionDialog(null, spin, "The number of checkpoints: ", 2, 1, null, null, null)==0)
+				{
+					DuSettings.setPoints((Integer) numModel.getNumber());
+				}
+			}
+		});
+		menuConfig.add(itemPointsNum);
 		
 		JMenuItem itemAbout = new JMenuItem(new AbstractAction("About")
 		{
@@ -127,7 +140,7 @@ public class DuMenuBar extends JMenuBar
 
 		//Text Field to display Path
 		text = new JTextField();
-		text.setText(settings.getPath());
+		text.setText(DuSettings.getPath());
 		text.setFont(new Font("Times New Roman",2,14));
 		add(text);
 
@@ -161,7 +174,7 @@ public class DuMenuBar extends JMenuBar
 	}
 	private void updateItemText()
 	{
-		if (settings.isImageSearchMode())
+		if (DuSettings.isImageSearchMode())
 		{
 			itemImageMode.setText("Focus on images                   \u2714");
 		}

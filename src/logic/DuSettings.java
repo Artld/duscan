@@ -2,42 +2,47 @@ package logic;
 
 public class DuSettings
 {
-	private String path = System.getProperty("user.home");
-	private int minFileLength = 1024*5;
-	private int points = 10;
-	private boolean imageSearchMode = false;
+	private static String path = System.getProperty("user.home");
+	private static int minFileLength = 1024*5;
+	private static int points = 10;
+	private static boolean imageSearchMode = false;
 	
-	
-	public int getPoints()
-	{
-		return points;
-	}
-	public void setPoints(int points)
-	{
-		this.points = points;
-	}	
-	public boolean isImageSearchMode()
-	{
-		return imageSearchMode;
-	}
-	public void setImageSearchMode(boolean imageSearchMode)
-	{
-		this.imageSearchMode = imageSearchMode;
-	}
-	public String getPath()
+	public static String getPath()
 	{
 		return path;
 	}
-	public void setPath(String path)
+	public static void setPath(String path)
 	{
-		this.path = path;
+		if (!path.equals(""))
+		{
+			DuSettings.path = path;
+		}
 	}
-	public int getMinFileLength()
+	public static int getMinFileLength()
 	{
 		return minFileLength;
 	}
-	public void setMinFileLength(int minFileLength)
+	public static void setMinFileLength(int minFileLength)
 	{
-		this.minFileLength = minFileLength;
+		DuSettings.minFileLength = minFileLength;
+	}
+	public static int getPoints()
+	{
+		return points;
+	}
+	public static void setPoints(int points)
+	{
+		if (points >= 1)
+		{
+			DuSettings.points = points;
+		}
+	}
+	public static boolean isImageSearchMode()
+	{
+		return imageSearchMode;
+	}
+	public static void setImageSearchMode(boolean imageSearchMode)
+	{
+		DuSettings.imageSearchMode = imageSearchMode;
 	}
 }

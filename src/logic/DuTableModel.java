@@ -62,7 +62,7 @@ public class DuTableModel extends AbstractTableModel
 	@Override
 	public String getColumnName(int col) 
 	{
-		String[] colNames = {"", "Name", "Size/KiB", "Path"};
+		String[] colNames = {"", "Name", "Size/KiB", "Folder"};
 		return colNames[col];
 	}
 	@Override
@@ -78,10 +78,10 @@ public class DuTableModel extends AbstractTableModel
 		Object ret = null;
 		switch (col)
 		{
-		case 0: ret = selectList.get(row);	break;
-		case 1: ret = file.getName();		break;
-		case 2: ret = file.length()/1024;	break;
-		case 3: ret = file.getPath();		break;
+		case 0: ret = selectList.get(row);  break;
+		case 1: ret = file.getName();       break;
+		case 2: ret = file.length()/1024;   break;
+		case 3: ret = file.getParentFile(); break;
 		}
 		return ret;
 	}

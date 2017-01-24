@@ -9,9 +9,11 @@ import java.util.ArrayList;
 
 import javax.swing.*;
 
+import logic.DuFileSearch;
+import logic.DuImgSearch;
+import logic.DuSearch;
 import logic.DuSettings;
 import logic.DuOutputStream;
-import logic.DuSearcher;
 import logic.DuTableModel;
 
 class DuPanel extends JPanel
@@ -33,12 +35,12 @@ class DuPanel extends JPanel
 	{
 		setLayout(null);
 
-		final DuSettings settings = new DuSettings();
+		//final DuSettings settings = new DuSettings();
 
 		ActionToggleView aToggle = new ActionToggleView();
 		
 		//extended JMenuBar class
-		bar = new DuMenuBar(settings,aToggle);
+		bar = new DuMenuBar(aToggle);
 		add(bar);
 
 		txtArea = new JTextArea();
@@ -101,7 +103,7 @@ class DuPanel extends JPanel
 			{
 				if (new File(bar.getText()).isDirectory())
 				{
-					settings.setPath(bar.getText());
+					DuSettings.setPath(bar.getText());
 					txtArea.setText("");
 
 					new Thread(new Runnable()
@@ -111,7 +113,17 @@ class DuPanel extends JPanel
 						{				
 							btnStart.setEnabled(false);
 
-							DuSearcher searcher = new DuSearcher(settings, progress);
+							DuSearch searcher;
+							
+							if (DuSettings.isImageSearchMode())
+							{
+								searcher = new DuImgSearch(progress);
+							}
+							else
+							{
+								searcher = new DuFileSearch(progress);
+							}
+							
 							ArrayList<ArrayList<File>> dubList = searcher.getDubList();
 							model.showList(dubList,table);
 
