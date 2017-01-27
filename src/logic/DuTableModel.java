@@ -4,9 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
@@ -20,9 +17,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 @SuppressWarnings("serial")
 public class DuTableModel extends AbstractTableModel
 {
-	private ArrayList<File> displayedList = null;			//list displayed inside table
-	private ArrayList<Boolean> coloredList = null;			//list of groups of duplicates
-	private ArrayList<Boolean> selectList = null;			//list containing  user's checks
+	private ArrayList<Duplicate> displayedList = new ArrayList<>(); //list displayed inside table
 	private JTable tbl = null;
 	public ActionOpen   aOpen   = new ActionOpen();
 	public ActionDelete aDelete = new ActionDelete();
@@ -31,26 +26,18 @@ public class DuTableModel extends AbstractTableModel
 	public ActionDeselect aDeselect = new ActionDeselect();
 	public ListenerDoubleClick dClickListener = new ListenerDoubleClick();
 
-	//Inicialization function
-	public void showList(ArrayList<ArrayList<File>> bList, JTable tbl)
+	/**Inicialization method*/
+	public void showList(ArrayList<ArrayList<File>> bigList, JTable tbl)
 	{
 		this.tbl = tbl;
-		this.displayedList = new ArrayList<File>();
-		this.coloredList = new ArrayList<Boolean>();
-		boolean b = true;
-
-		for (ArrayList<File> sList : bList)
+		this.displayedList = new ArrayList<Duplicate>();
+		for (int i=0; i<bigList.size(); i++)
 		{
-			this.displayedList.addAll(sList);
-
-			List<Boolean> list = Arrays.asList(new Boolean[sList.size()]);
-			Collections.fill(list, b);
-			this.coloredList.addAll(list);
-			b = !b;
+			for (File file : bigList.get(i))
+			{
+				displayedList.add(new Duplicate(file,i));
+			}
 		}
-		selectList = new ArrayList<Boolean>(Arrays.asList(new Boolean[displayedList.size()])); //makes selectList size = displayedList size
-		Collections.fill(selectList, Boolean.FALSE);
-
 		updateRowColours();
 		fireTableDataChanged();
 	}
@@ -68,17 +55,17 @@ public class DuTableModel extends AbstractTableModel
 	@Override
 	public int getRowCount() 
 	{
-		if (displayedList == null) return 0;
 		return displayedList.size();
 	}
 	@Override
 	public Object getValueAt(int row, int col) 
 	{
-		File file = displayedList.get(row);
+		Duplicate d = displayedList.get(row);
+		File file = d.getFile();
 		Object ret = null;
 		switch (col)
 		{
-		case 0: ret = selectList.get(row);  break;
+		case 0: ret = d.isSelected();		break;
 		case 1: ret = file.getName();       break;
 		case 2: ret = file.length()/1024;   break;
 		case 3: ret = file.getParentFile(); break;
@@ -95,7 +82,7 @@ public class DuTableModel extends AbstractTableModel
 	{
 		if (aValue instanceof Boolean && column == 0)
 		{
-			selectList.set(row, (Boolean) aValue);
+			displayedList.get(row).setSelected((Boolean) aValue);
 			fireTableCellUpdated(row, column);
 		}
 	}
@@ -112,35 +99,39 @@ public class DuTableModel extends AbstractTableModel
 	}
 	private void openFile()
 	{
-		if(!Desktop.isDesktopSupported())
-		{
-			System.out.println("Desktop is not supported");
-			return;
-		}
-		Desktop desktop = Desktop.getDesktop();
-		File file = displayedList.get(tbl.getSelectedRow());
+		File file = displayedList.get(tbl.getSelectedRow()).getFile();
 		if(file.exists())
 		{
 			try
 			{
-				desktop.open(file);
+				if(Desktop.isDesktopSupported())
+				{
+					Desktop.getDesktop().open(file);
+				}
+				else
+				{
+					System.out.println("Can not open file: desktop is not supported");
+				}
 			} 
 			catch (IOException e1)
 			{
-				e1.printStackTrace();
+				System.out.println(e1.getMessage());
 			}
 		}
 	}
 	private void updateRowColours() 
 	{
-		MyTableCellRenderer renderer = new MyTableCellRenderer();
-		tbl.getColumnModel().getColumn(1).setCellRenderer(renderer);
-		tbl.getColumnModel().getColumn(2).setCellRenderer(renderer);
-		tbl.getColumnModel().getColumn(3).setCellRenderer(renderer);
+		if (tbl != null)
+		{
+			MyTableCellRenderer renderer = new MyTableCellRenderer();
+			tbl.getColumnModel().getColumn(1).setCellRenderer(renderer);
+			tbl.getColumnModel().getColumn(2).setCellRenderer(renderer);
+			tbl.getColumnModel().getColumn(3).setCellRenderer(renderer);
+		}
 	}
 	private Color getRowColour(int row)
 	{
-		if (coloredList.get(row))
+		if (displayedList.get(row).getGroupId()%2 == 0)
 		{
 			return Color.GREEN;
 		}
@@ -151,35 +142,32 @@ public class DuTableModel extends AbstractTableModel
 	}
 	private void autoSelect()
 	{
-		boolean b = coloredList.get(0);
-		selectList.set(0, false);
-		for (int i=1; i<coloredList.size(); i++)
+		for (int i=1; i<displayedList.size(); i++)
 		{
-			if (coloredList.get(i)==b)
+			if (displayedList.get(i).getGroupId() == displayedList.get(i-1).getGroupId())
 			{
-				selectList.set(i, true);
+				displayedList.get(i).setSelected(true);
 			}
 			else
 			{
-				selectList.set(i, false);
-				b = !b;
+				displayedList.get(i).setSelected(false);
 			}
 		}
 		fireTableDataChanged();
 	}
 	private void mirrorSelection()
 	{
-		for (int i=0; i<selectList.size(); i++)
+		for (Duplicate d : displayedList)
 		{
-			selectList.set(i, !selectList.get(i));
+			d.setSelected(!d.isSelected());
 		}
 		fireTableDataChanged();
 	}
 	private void deselect()
 	{
-		for (int i=0; i<selectList.size(); i++)
+		for (Duplicate d : displayedList)
 		{
-			selectList.set(i, false);
+			d.setSelected(false);
 		}
 		fireTableDataChanged();
 	}
@@ -188,23 +176,19 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			if (selectList != null)
+			for (int i=0; i<displayedList.size(); i++)
 			{
-				for (int i=0; i<selectList.size(); i++)
+				Duplicate d = displayedList.get(i);
+				if (d.isSelected())
 				{
-					if (selectList.get(i))
-					{
-						File file = displayedList.get(i);
-						file.delete();
-						displayedList.remove(i);
-						selectList.remove(i);
-						coloredList.remove(i);
-						i--;
-					}
+					System.out.println("Deleting "+d.getFile());
+					d.getFile().delete();
+					displayedList.remove(i);
+					i--;
 				}
-				updateRowColours();
-				fireTableDataChanged();
 			}
+			updateRowColours();
+			fireTableDataChanged();
 		}		
 	}
 	private class ActionOpen implements ActionListener
@@ -212,12 +196,9 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			if(displayedList != null)
+			if(tbl != null && tbl.getSelectedRowCount() > 0)
 			{
-				if(tbl.getSelectedRowCount() > 0)
-				{
-					openFile();
-				}
+				openFile();
 			}
 		}		
 	}
@@ -240,7 +221,6 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void mouseExited(java.awt.event.MouseEvent e){}
 	}
-	//this class was completely rewritten
 	private class MyTableCellRenderer extends DefaultTableCellRenderer
 	{
 		private static final long serialVersionUID = 1L;
@@ -259,13 +239,7 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			if(selectList != null)
-			{
-				if(!coloredList.isEmpty())
-				{
-					autoSelect();
-				}
-			}
+			autoSelect();
 		}
 	}
 	private class ActionMirrorSelection implements ActionListener
@@ -273,10 +247,7 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			if(selectList != null)
-			{
-				mirrorSelection();
-			}
+			mirrorSelection();
 		}
 	}
 	private class ActionDeselect implements ActionListener
@@ -284,10 +255,7 @@ public class DuTableModel extends AbstractTableModel
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			if(selectList != null)
-			{
-				deselect();
-			}
+			deselect();
 		}
 	}
 }

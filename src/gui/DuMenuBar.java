@@ -176,7 +176,7 @@ public class DuMenuBar extends JMenuBar
 	{
 		if (DuSettings.isImageSearchMode())
 		{
-			itemImageMode.setText("Focus on images                   \u2714");
+			itemImageMode.setText("Focus on images                            \u2714");
 		}
 		else
 		{

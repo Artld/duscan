@@ -26,14 +26,14 @@ public class DuImgSearch implements DuSearch
 		fileList = new ArrayList <File> ();	
 		makeFileList(DuSettings.getPath(), DuSettings.getMinFileLength());
 
-		System.out.println("File list has "+fileList.size()+" points. \n Start hashing...");
+		System.out.println("File list has "+fileList.size()+" points. \nStart hashing...");
 		progress.setValue(0);
 		progress.setMaximum(fileList.size());
 		progress.setString("hashing...");
 
 		ArrayList<int[]> hl = getHashList();
 		
-		System.out.println("Hashing completed. \n Start comparison...");
+		System.out.println("Hashing completed. \nStart comparison...");
 		progress.setValue(0);
 		progress.setString("comparison...");
 		
@@ -110,7 +110,11 @@ public class DuImgSearch implements DuSearch
 		ArrayList<int[]> hashList = new ArrayList<int[]> ();
 		for (int i=0; i<fileList.size(); i++)
 		{
-			hashList.add(hashing(fileList.get(i)));
+			int[] hash = hashing(fileList.get(i));
+			if (hash!=null)
+			{
+				hashList.add(hash);
+			}
 			progress.setValue(i+1);
 		}
 		return hashList;
@@ -130,9 +134,9 @@ public class DuImgSearch implements DuSearch
 				return null;
 			}
 		} 
-		catch (IOException e)	
+		catch (IOException | IllegalArgumentException e)	
 		{
-			System.out.println("Error hashing image "+file);
+			System.out.println("Error reading image "+file);
 			System.out.println(e.getMessage());
 			return null;
 		}
