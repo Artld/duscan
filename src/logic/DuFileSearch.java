@@ -58,7 +58,7 @@ public class DuFileSearch implements DuSearch
 
 	/**Finds all files by path and fills fileList
 	 * @param path	path to folder with files
-	 * @param minFileLength minimal length for file to enter in a list*/
+	 * @param minFileLength minimal	length for file to enter in a list*/
 	private void makeFileList(String path, int minFileLength) 
 	{
 		File file = null;
@@ -79,52 +79,45 @@ public class DuFileSearch implements DuSearch
 			}
 		}
 	}
-
-	/** Находит файлы одинакового размера и расширения*/
+	
+	/** Finds files with same length */
 	private ArrayList<ArrayList<File>>  lengthChecking ()
 	{
 		ArrayList<ArrayList<File>> bigList = new ArrayList<ArrayList<File>>();
-		for (int i=0; i<fileList.size(); i++)
+		ArrayList<Long> lengthList = getLengthList();
+		for (int i=0; i<lengthList.size(); i++)
 		{
-			File file1 = fileList.get(i);						//файл1 для сравнения
+			long l1 = lengthList.get(i);
 			ArrayList <File> smalList = new ArrayList<File>();	//список дубликатов этого файла
-			String fname = file1.getName();						//имя файла1
-			if (fname.lastIndexOf(".")==-1)						//нет расширения
+			for (int j=i+1; j<lengthList.size(); j++) 
 			{
-				continue;
-			}
-			String extens1 = fname.substring(fname.lastIndexOf("."), fname.length());		//расширение1
-			for (int j=i+1; j<fileList.size(); j++) 
-			{
-				File file2 = fileList.get(j);		//файл2 для сравнения
-
-				fname = file2.getName();			//имя файла2
-				if (fname.lastIndexOf(".")==-1)		//нет расширения
+				long l2 = lengthList.get(j);
+				if (l1 == l2)	//если файлы одинаковой длины
 				{
+					smalList.add(fileList.get(j));	//добавить файл2 в список дубликатов файла1
 					fileList.remove(j);				//убрать файл2 из списка fileList
-					j--;
-					continue;
-				}
-				String extens2 = fname.substring(fname.lastIndexOf("."), fname.length());	//расширение2
-				if (!extEquals(extens1, extens2))	//расширения не совпадают
-				{
-					continue;
-				}
-				if (file1.length()==file2.length())	//если файлы одинаковой длины
-				{
-					smalList.add(file2);			//добавить файл2 в список дубликатов файла1
-					fileList.remove(j);				//убрать файл2 из списка fileList
+					lengthList.remove(j);
 					j--;
 				}
 			}
-			if (!smalList.isEmpty())		//если хотя бы один дубликат найден
+			if (!smalList.isEmpty())			//если хотя бы один дубликат найден
 			{
-				smalList.add(file1);		//добавить также file1
-				bigList.add(smalList);		//добавить список в список дубликатов
+				smalList.add(fileList.get(i));	//добавить также file1
+				bigList.add(smalList);			//добавить список в список дубликатов
 			}
-			progress.setValue(i+1);			//отображение прогресса
+			progress.setValue(i+1);				//отображение прогресса
 		}
 		return bigList;
+	}
+	
+	private ArrayList<Long> getLengthList ()
+	{
+		ArrayList<Long> lengthList = new ArrayList<Long>();
+		for (File file : fileList)
+		{
+			lengthList.add(file.length());
+		}
+		return lengthList;
 	}
 
 	/**Compares file hashes */
@@ -211,22 +204,5 @@ public class DuFileSearch implements DuSearch
 			}
 		}
 		return flag;
-	}
-	
-	/**File extensions equals function*/
-	private boolean extEquals(String s1, String s2)
-	{
-		if (s1.equals(s2) || s1.equals(s2.toLowerCase()) || s1.equals(s2.toUpperCase()))
-		{
-			return true;
-		}
-		if (s1.equals("jpg")||s1.equals("jpeg")||s1.equals("JPG")||s1.equals("JPEG"))
-		{
-			if (s2.equals("jpg")||s2.equals("jpeg")||s2.equals("JPG")||s2.equals("JPEG"))
-			{
-				return true;
-			}
-		}
-		return false;
 	}
 }
