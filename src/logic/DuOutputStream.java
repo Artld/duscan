@@ -5,18 +5,19 @@ import java.io.OutputStream;
 
 import javax.swing.JTextArea;
 
+/**Class to redirect System.out stream to textArea*/
 public class DuOutputStream extends OutputStream
 {
-	private JTextArea tArea;
-	public DuOutputStream (JTextArea tArea)
-	{
-		this.tArea = tArea;
-	}
-	@Override
-	public void write(byte[] bytes, int offset, int length) throws IOException
-	{
-		tArea.append (new String(bytes,offset,length));
-	}
-	@Override
-	public void write(int b) throws IOException {}
+    private JTextArea tArea;
+    public DuOutputStream (JTextArea tArea)
+    {
+        this.tArea = tArea;
+    }
+    @Override
+    public void write(byte[] bytes, int offset, int length) throws IOException
+    {
+        tArea.append (new String(bytes,offset,length));
+    }
+    @Override
+    public void write(int b) throws IOException {}
 }
